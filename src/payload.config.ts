@@ -1,12 +1,12 @@
 import path from "path";
 import { buildConfig } from "payload/config";
-import Users from "./collections/Users";
+import Admins from "./collections/Admins";
 
 export default buildConfig({
   admin: {
-    user: Users.slug,
+    user: Admins.slug,
   },
-  collections: [Users],
+  collections: [Admins],
   typescript: {
     outputFile: path.resolve(__dirname, "payload-types.ts"),
   },
