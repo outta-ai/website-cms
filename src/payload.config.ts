@@ -1,7 +1,6 @@
-import { buildConfig } from "payload/config";
 import path from "path";
+import { buildConfig } from "payload/config";
 import Users from "./collections/Users";
-import { payloadCloud } from "@payloadcms/plugin-cloud";
 
 export default buildConfig({
   admin: {
@@ -11,5 +10,5 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(__dirname, "payload-types.ts"),
   },
-  plugins: [payloadCloud()],
+  plugins: [],
 });
