@@ -10,6 +10,7 @@ const Admins: CollectionConfig = {
     {
       name: "name",
       type: "text",
+      required: true,
     },
   ],
 };
