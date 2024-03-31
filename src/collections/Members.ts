@@ -1,32 +1,37 @@
-import { CollectionConfig } from "payload/types";
+import type { CollectionConfig } from "payload/types";
 
 const Members: CollectionConfig = {
-  slug: "members",
-  auth: true,
-  access: {
-    read: () => true,
-  },
-  admin: {
-    useAsTitle: "name",
-    defaultColumns: ["name"],
-  },
-  fields: [
-    {
-      name: "name",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "works",
-      type: "array",
-      fields: [
-        {
-          name: "description",
-          type: "text",
-        },
-      ],
-    },
-  ],
+	slug: "members",
+	access: {
+		read: () => true,
+	},
+	admin: {
+		useAsTitle: "name",
+		defaultColumns: ["name"],
+		group: "Users",
+	},
+	fields: [
+		{
+			name: "name",
+			type: "text",
+			required: true,
+		},
+		{
+			name: "works",
+			type: "array",
+			fields: [
+				{
+					name: "description",
+					type: "text",
+				},
+			],
+		},
+		{
+			type: "upload",
+			name: "profile",
+			relationTo: "media",
+		},
+	],
 };
 
 export default Members;

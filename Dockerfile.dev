@@ -1,0 +1,11 @@
+FROM node:20-alpine
+
+RUN corepack enable
+
+WORKDIR /home/node/app
+COPY . .
+RUN pnpm install
+
+ENTRYPOINT [ "pnpm" ]
+CMD [ "run", "dev" ]
+
