@@ -35,20 +35,33 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Set short sha
+        id: sha_short
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Build and Push
         uses: docker/build-push-action@v5
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           # REGISTRY_ALIAS: ${{ vars.REGISTRY_ALIAS }}
           REPOSITORY: ${{ vars.REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ steps.sha_short.outputs.sha_short }}
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:latest
-          cache-to: type=inline
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          provenance: false
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:latest
