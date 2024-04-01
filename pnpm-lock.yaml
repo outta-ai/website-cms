@@ -11,6 +11,9 @@ dependencies:
   '@aws-sdk/lib-storage':
     specifier: ^3.540.0
     version: 3.540.0(@aws-sdk/client-s3@3.540.0)
+  '@aws-sdk/s3-request-presigner':
+    specifier: ^3.540.0
+    version: 3.540.0
   '@payloadcms/bundler-vite':
     specifier: ^0.1.6
     version: 0.1.6(@types/node@20.12.2)(payload@2.11.2)(react-dom@18.2.0)
@@ -20,9 +23,6 @@ dependencies:
   '@payloadcms/db-mongodb':
     specifier: ^1.4.3
     version: 1.4.3(aws-crt@1.21.1)(payload@2.11.2)
-  '@payloadcms/plugin-cloud-storage':
-    specifier: ^1.0.9
-    version: 1.0.9(@aws-sdk/client-s3@3.540.0)(payload@2.11.2)
   '@payloadcms/richtext-slate':
     specifier: ^1.4.0
     version: 1.4.0(payload@2.11.2)(react-dom@18.2.0)
@@ -737,6 +737,20 @@ packages:
       tslib: 2.6.2
     dev: false
 
+  /@aws-sdk/s3-request-presigner@3.540.0:
+    resolution: {integrity: sha512-alm+PiQOzAIfNrabxOG/Fk9uimQq8VCdqmhRvZRG7iDwtl4yrW+ZinoDssWFUgeZgPZQTymLcslC2hvMKHgY9g==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@aws-sdk/signature-v4-multi-region': 3.535.0
+      '@aws-sdk/types': 3.535.0
+      '@aws-sdk/util-format-url': 3.535.0
+      '@smithy/middleware-endpoint': 2.5.0
+      '@smithy/protocol-http': 3.3.0
+      '@smithy/smithy-client': 2.5.0
+      '@smithy/types': 2.12.0
+      tslib: 2.6.2
+    dev: false
+
   /@aws-sdk/signature-v4-multi-region@3.535.0:
     resolution: {integrity: sha512-tqCsEsEj8icW0SAh3NvyhRUq54Gz2pu4NM2tOSrFp7SO55heUUaRLSzYteNZCTOupH//AAaZvbN/UUTO/DrOog==}
     engines: {node: '>=14.0.0'}
@@ -789,6 +803,16 @@ packages:
       '@aws-sdk/types': 3.535.0
       '@smithy/types': 2.12.0
       '@smithy/util-endpoints': 1.2.0
+      tslib: 2.6.2
+    dev: false
+
+  /@aws-sdk/util-format-url@3.535.0:
+    resolution: {integrity: sha512-ElbNkm0bddu53CuW44Iuux1ZbTV50fydbSh/4ypW3LrmUvHx193ogj0HXQ7X26kmmo9rXcsrLdM92yIeTjidVg==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@aws-sdk/types': 3.535.0
+      '@smithy/querystring-builder': 2.2.0
+      '@smithy/types': 2.12.0
       tslib: 2.6.2
     dev: false
 
@@ -2173,25 +2197,6 @@ packages:
     transitivePeerDependencies:
       - aws-crt
       - supports-color
-    dev: false
-
-  /@payloadcms/plugin-cloud-storage@1.0.9(@aws-sdk/client-s3@3.540.0)(payload@2.11.2):
-    resolution: {integrity: sha512-Be1lui+AcH2x5zkLA0ypvXtI7jazf9pKF6KURmKsr1I8qPrif6grMhvezdCxgIkfG+sdMpdgBU3gurTQ8YVV5Q==}
-    peerDependencies:
-      '@aws-sdk/client-s3': ^3.142.0
-      '@azure/storage-blob': ^12.11.0
-      '@google-cloud/storage': ^6.4.1
-      payload: ^1.0.27
-    peerDependenciesMeta:
-      '@aws-sdk/client-s3':
-        optional: true
-      '@azure/storage-blob':
-        optional: true
-      '@google-cloud/storage':
-        optional: true
-    dependencies:
-      '@aws-sdk/client-s3': 3.540.0(aws-crt@1.21.1)
-      payload: 2.11.2(typescript@5.4.3)(webpack@5.91.0)
     dev: false
 
   /@payloadcms/richtext-slate@1.4.0(payload@2.11.2)(react-dom@18.2.0):

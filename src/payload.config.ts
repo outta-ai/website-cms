@@ -5,8 +5,6 @@ import { buildConfig } from "payload/config";
 
 import { viteBundler } from "@payloadcms/bundler-vite";
 import { mongooseAdapter } from "@payloadcms/db-mongodb";
-import { cloudStorage } from "@payloadcms/plugin-cloud-storage";
-import { s3Adapter } from "@payloadcms/plugin-cloud-storage/s3";
 import { slateEditor } from "@payloadcms/richtext-slate";
 
 import Admins from "./collections/Admins";
@@ -33,24 +31,5 @@ export default buildConfig({
 	typescript: {
 		outputFile: path.resolve(__dirname, "payload-types.ts"),
 	},
-	plugins: [
-		cloudStorage({
-			collections: {
-				media: {
-					adapter: s3Adapter({
-						config: {
-							endpoint: process.env.S3_ENDPOINT,
-							forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
-							credentials: {
-								accessKeyId: process.env.S3_ACCESS_KEY_ID,
-								secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-							},
-							region: process.env.S3_REGION,
-						},
-						bucket: process.env.S3_BUCKET,
-					}),
-				},
-			},
-		}),
-	],
+	plugins: [],
 });
