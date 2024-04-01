@@ -52,7 +52,7 @@ jobs:
         uses: docker/build-push-action@v5
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          # REGISTRY_ALIAS: ${{ vars.REGISTRY_ALIAS }}
+          REGISTRY_ALIAS: ${{ vars.REGISTRY_ALIAS }}
           REPOSITORY: ${{ vars.REPOSITORY }}
           IMAGE_TAG: ${{ steps.sha_short.outputs.sha_short }}
         with:
@@ -64,5 +64,5 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           provenance: false
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:latest
