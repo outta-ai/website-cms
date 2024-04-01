@@ -42,7 +42,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ secrets.REGISTRY_ALIAS }}/${{ secrets.REPOSITORY }}:latest
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:latest
           cache-to: type=inline
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REGISTRY_ALIAS }}/${{ secrets.REPOSITORY }}:${{ github.sha }}
-          # tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.REGISTRY_ALIAS }}/${{ secrets.REPOSITORY }}:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:${{ github.sha }}
+          # tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:latest
