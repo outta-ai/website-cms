@@ -47,7 +47,7 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:latest
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:latest
           cache-to: type=inline
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}
