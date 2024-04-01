@@ -70,14 +70,14 @@ const WebsiteMain: GlobalConfig = {
 		},
 		{
 			type: "collapsible",
-			label: "How Do We Do",
+			label: "How We Do",
 			admin: {
 				initCollapsed: true,
 			},
 			fields: [
 				{
 					name: "methods",
-					label: "How Do We Do",
+					label: "How We Do",
 					type: "group",
 					fields: [
 						{
