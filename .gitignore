@@ -1,0 +1,9 @@
+build
+dist
+/media
+node_modules
+.DS_Store
+.env
+docker-compose.yml
+./data
+payload-types.ts

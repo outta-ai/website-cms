@@ -1,0 +1,13 @@
+services:
+  mongo:
+    image: mongo:latest
+    command:
+      - --storageEngine=wiredTiger
+    volumes:
+      - data:./data/db
+    logging:
+      driver: none
+
+volumes:
+  data:
+  node_modules:
