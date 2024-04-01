@@ -5,6 +5,8 @@ on:
       - main
       - develop
   workflow_dispatch:
+permissions:
+  id-token: write
 jobs:
   docker-build:
     runs-on: ubuntu-latest
