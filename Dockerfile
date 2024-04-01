@@ -2,12 +2,10 @@ FROM node:20-alpine as base
 
 FROM base as builder
 
-RUN corepack enable
-
 WORKDIR /home/node/app
 COPY package*.json ./
 COPY pnpm-lock.yaml ./
-RUN pnpm install
+RUN corepack enable && pnpm install
 
 COPY . .
 RUN pnpm build
@@ -20,7 +18,7 @@ ENV PAYLOAD_CONFIG_PATH=dist/payload.config.js
 WORKDIR /home/node/app
 COPY package*.json  ./
 
-RUN pnpm install --production
+RUN corepack enable && pnpm install --production
 COPY --from=builder /home/node/app/dist ./dist
 COPY --from=builder /home/node/app/build ./build
 
