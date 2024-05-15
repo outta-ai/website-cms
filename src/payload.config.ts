@@ -11,8 +11,7 @@ import Admins from "./collections/Admins";
 import Media from "./collections/Media";
 import Members from "./collections/Members";
 
-import Privacy from "./globals/privacy";
-import Terms from "./globals/terms";
+import Information from "./globals/info";
 import WebsiteLab from "./globals/website-lab";
 import WebsiteMain from "./globals/website-main";
 import WebsitePlayground from "./globals/website-playground";
@@ -29,7 +28,7 @@ export default buildConfig({
 		css: path.resolve(__dirname, "styles/admin.css"),
 	},
 	collections: [Members, Admins, Media],
-	globals: [WebsiteMain, WebsiteLab, WebsitePlayground, Privacy, Terms],
+	globals: [WebsiteMain, WebsiteLab, WebsitePlayground, Information],
 	typescript: {
 		outputFile: path.resolve(__dirname, "payload-types.ts"),
 	},
