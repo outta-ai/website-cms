@@ -11,7 +11,7 @@ const Privacy: GlobalConfig = {
 	},
 	fields: [
 		{
-			type: "text",
+			type: "textarea",
 			name: "contents",
 			label: "개인정보취급방침",
 		},
