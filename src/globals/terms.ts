@@ -11,7 +11,7 @@ const Terms: GlobalConfig = {
 	},
 	fields: [
 		{
-			type: "text",
+			type: "textarea",
 			name: "contents",
 			label: "이용약관",
 		},
