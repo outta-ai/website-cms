@@ -251,74 +251,81 @@ const WebsiteLab: GlobalConfig = {
 			required: true,
 			fields: [
 				{
-					type: "array",
-					name: "generations",
-					label: "기수",
-					fields: [
-						{
-							type: "number",
-							name: "index",
-							label: "기수",
-							required: true,
-						},
-						{
-							type: "date",
-							name: "start",
-							label: "시작",
-							admin: {
-								date: {
-									pickerAppearance: "monthOnly",
-									displayFormat: "yyyy년 MM월",
-								},
-							},
-							required: true,
-						},
-						{
-							type: "date",
-							name: "end",
-							label: "종료",
-							admin: {
-								date: {
-									pickerAppearance: "monthOnly",
-									displayFormat: "yyyy년 MM월",
-								},
-							},
-						},
-					],
-				},
-				{
-					type: "array",
+					type: "group",
 					name: "members",
 					label: "멤버",
 					fields: [
 						{
-							type: "text",
-							name: "role",
-							label: "직책",
-							required: true,
-						},
-						{
-							type: "number",
-							name: "generation",
+							type: "array",
+							name: "generations",
 							label: "기수",
-							required: true,
-						},
-						{
-							type: "relationship",
-							name: "member",
-							label: "멤버",
-							relationTo: "members",
+							fields: [
+								{
+									type: "number",
+									name: "index",
+									label: "기수",
+									required: true,
+								},
+								{
+									type: "date",
+									name: "start",
+									label: "시작",
+									admin: {
+										date: {
+											pickerAppearance: "monthOnly",
+											displayFormat: "yyyy년 MM월",
+										},
+									},
+									required: true,
+								},
+								{
+									type: "date",
+									name: "end",
+									label: "종료",
+									admin: {
+										date: {
+											pickerAppearance: "monthOnly",
+											displayFormat: "yyyy년 MM월",
+										},
+									},
+								},
+							],
 						},
 						{
 							type: "array",
-							name: "works",
-							label: "직무",
+							name: "members",
+							label: "멤버",
 							fields: [
 								{
 									type: "text",
-									name: "description",
-									label: "직무",
+									name: "role",
+									label: "직책",
 									required: true,
+								},
+								{
+									type: "number",
+									name: "generation",
+									label: "기수",
+									required: true,
+								},
+								{
+									type: "relationship",
+									name: "member",
+									label: "멤버",
+									relationTo: "members",
+								},
+								{
+									type: "array",
+									name: "works",
+									label: "직무",
+									fields: [
+										{
+											type: "text",
+											name: "description",
+											label: "직무",
+											required: true,
+										},
+									],
 								},
 							],
 						},
