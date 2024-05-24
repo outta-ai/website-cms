@@ -8,11 +8,14 @@ import { mongooseAdapter } from "@payloadcms/db-mongodb";
 import { slateEditor } from "@payloadcms/richtext-slate";
 
 import Admins from "./collections/Admins";
+import Attachments from "./collections/Attachments";
+import LabPosts from "./collections/LabPosts";
 import Media from "./collections/Media";
 import Members from "./collections/Members";
 
 import Information from "./globals/info";
 import WebsiteLab from "./globals/website-lab";
+import Link from "./globals/website-link";
 import WebsiteMain from "./globals/website-main";
 import WebsitePlayground from "./globals/website-playground";
 
@@ -27,8 +30,8 @@ export default buildConfig({
 		bundler: viteBundler({}),
 		css: path.resolve(__dirname, "styles/admin.css"),
 	},
-	collections: [Members, Admins, Media],
-	globals: [WebsiteMain, WebsiteLab, WebsitePlayground, Information],
+	collections: [Members, Admins, Media, Attachments, LabPosts],
+	globals: [WebsiteMain, WebsiteLab, WebsitePlayground, Information, Link],
 	typescript: {
 		outputFile: path.resolve(__dirname, "payload-types.ts"),
 	},

@@ -12,13 +12,20 @@ const Members: CollectionConfig = {
 	},
 	fields: [
 		{
-			name: "name",
 			type: "text",
+			name: "name",
+			label: "이름",
 			required: true,
 		},
 		{
-			name: "works",
+			type: "email",
+			name: "email",
+			label: "이메일",
+		},
+		{
 			type: "array",
+			name: "works",
+			label: "이력",
 			fields: [
 				{
 					name: "description",
