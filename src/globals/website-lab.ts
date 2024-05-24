@@ -6,6 +6,9 @@ const WebsiteLab: GlobalConfig = {
 	admin: {
 		group: "Website",
 	},
+	access: {
+		read: () => true,
+	},
 	fields: [
 		{
 			type: "collapsible",
@@ -124,6 +127,12 @@ const WebsiteLab: GlobalConfig = {
 								plural: "Recommends",
 							},
 							fields: [
+								{
+									type: "upload",
+									name: "image",
+									label: "이미지",
+									relationTo: "media",
+								},
 								{
 									type: "richText",
 									name: "description",
