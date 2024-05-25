@@ -13,7 +13,7 @@ import type {
 
 import { S3Client } from "@aws-sdk/client-s3";
 import { getFiles, type File } from "../utils/getFiles";
-import { S3Create, S3Delete, S3Get } from "../utils/s3";
+import { S3Create, S3Delete } from "../utils/s3";
 
 type S3FileData = FileData &
 	TypeWithID & {
@@ -115,27 +115,9 @@ const afterRead: CollectionAfterReadHook<S3FileData> = async ({ doc }) => {
 		return doc;
 	}
 
-	const bucket = process.env.S3_BUCKET;
-	const client = new S3Client({
-		credentials: {
-			accessKeyId: process.env.S3_ACCESS_KEY_ID,
-			secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-		},
-		region: process.env.S3_REGION,
-		endpoint: process.env.S3_ENDPOINT,
-	});
-
-	const signedURL = await S3Get({
-		client,
-		bucket,
-		key: doc.object,
-		expiresIn: 15 * 60,
-		roundMinutes: 5,
-	});
-
 	return {
 		...doc,
-		url: signedURL,
+		url: `${process.env.CLOUDFRONT_URL}/${doc.object}`,
 	};
 };
 
