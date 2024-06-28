@@ -11,9 +11,8 @@ import type {
 	TypeWithID,
 } from "payload/types";
 
-import { S3Client } from "@aws-sdk/client-s3";
 import { getFiles, type File } from "../utils/getFiles";
-import { S3Create, S3Delete } from "../utils/s3";
+import { S3Create, S3Delete, s3Client } from "../utils/s3";
 
 type S3FileData = FileData &
 	TypeWithID & {
@@ -27,15 +26,6 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 	originalDoc,
 }) => {
 	const bucket = process.env.S3_BUCKET;
-	const client = new S3Client({
-		credentials: {
-			accessKeyId: process.env.S3_ACCESS_KEY_ID,
-			secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-		},
-		region: process.env.S3_REGION,
-		endpoint: process.env.S3_ENDPOINT,
-	});
-
 	const files = getFiles({ data, req });
 
 	if (!files.length) {
@@ -57,7 +47,7 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 
 		const result = await Promise.allSettled(
 			originalFiles.map((filename) =>
-				S3Delete({ client, bucket, key: filename }),
+				S3Delete({ client: s3Client, bucket, key: filename }),
 			),
 		);
 
@@ -78,7 +68,7 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 		const filename = `attachments/${uuid}${ext}`;
 
 		try {
-			await S3Create({ client, file, bucket, key: filename });
+			await S3Create({ client: s3Client, file, bucket, key: filename });
 			uploadedFiles.push({ ...file, object: filename });
 		} catch (e: unknown) {
 			throw new APIError("Failed to upload file", 500, undefined, true);
@@ -124,15 +114,6 @@ const afterRead: CollectionAfterReadHook<S3FileData> = async ({ doc }) => {
 // Handle file deletion
 const afterDelete: CollectionAfterDeleteHook<S3FileData> = async ({ doc }) => {
 	const bucket = process.env.S3_BUCKET;
-	const client = new S3Client({
-		credentials: {
-			accessKeyId: process.env.S3_ACCESS_KEY_ID,
-			secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-		},
-		region: process.env.S3_REGION,
-		endpoint: process.env.S3_ENDPOINT,
-	});
-
 	const originalFiles: string[] = [];
 
 	if (typeof doc.filename === "string") {
@@ -147,7 +128,7 @@ const afterDelete: CollectionAfterDeleteHook<S3FileData> = async ({ doc }) => {
 
 	const result = await Promise.allSettled(
 		originalFiles.map((filename) =>
-			S3Delete({ client, bucket, key: filename }),
+			S3Delete({ client: s3Client, bucket, key: filename }),
 		),
 	);
 
