@@ -12,7 +12,7 @@ import type {
 } from "payload/types";
 
 import { getFiles, type File } from "../utils/getFiles";
-import { S3Create, S3Delete, s3Client } from "../utils/s3";
+import { S3Create, S3Delete, getS3Client } from "../utils/s3";
 
 type S3FileData = FileData &
 	TypeWithID & {
@@ -47,7 +47,7 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 
 		const result = await Promise.allSettled(
 			originalFiles.map((filename) =>
-				S3Delete({ client: s3Client, bucket, key: filename }),
+				S3Delete({ client: getS3Client(), bucket, key: filename }),
 			),
 		);
 
@@ -68,7 +68,7 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 		const filename = `${uuid}${ext}`;
 
 		try {
-			await S3Create({ client: s3Client, file, bucket, key: filename });
+			await S3Create({ client: getS3Client(), file, bucket, key: filename });
 			uploadedFiles.push({ ...file, object: filename });
 		} catch (e: unknown) {
 			throw new APIError("Failed to upload file", 500, undefined, true);
@@ -128,7 +128,7 @@ const afterDelete: CollectionAfterDeleteHook<S3FileData> = async ({ doc }) => {
 
 	const result = await Promise.allSettled(
 		originalFiles.map((filename) =>
-			S3Delete({ client: s3Client, bucket, key: filename }),
+			S3Delete({ client: getS3Client(), bucket, key: filename }),
 		),
 	);
 
