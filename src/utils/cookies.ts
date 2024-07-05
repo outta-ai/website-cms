@@ -1,12 +1,11 @@
-import { Effect } from "effect";
 import type { Request } from "express";
 
 import { Buffer } from "node:buffer";
 import crypto from "node:crypto";
 
-type DecryptCookieOptions = { hashKey?: boolean };
+export type DecryptCookieOptions = { hashKey?: boolean };
 
-class DecryptCookieError extends Error {
+export class DecryptCookieError extends Error {
 	type: "invalid_key" | "no_cookie" | "invalid_cookie";
 	internal?: string | Error;
 
@@ -25,62 +24,61 @@ class DecryptCookieError extends Error {
 	}
 }
 
-export const DecryptCookie = (
+export const decryptCookie = (
 	name: string,
 	req: Request,
 	secret: string,
-	{ hashKey }: DecryptCookieOptions,
-) =>
-	Effect.tryPromise(async () => {
-		const key = (() => {
-			if (hashKey) {
-				const cipher = crypto.createHash("sha256");
-				cipher.update(secret);
-				return cipher.digest();
-			}
-
-			const key = Buffer.from(secret, "hex");
-			if (key.length * 8 !== 256) {
-				throw new DecryptCookieError("invalid_key");
-			}
-			return key;
-		})();
-
-		const cookie = req.cookies;
-		if (!(name in cookie)) {
-			throw new DecryptCookieError("no_cookie");
+	option: DecryptCookieOptions,
+) => {
+	const key = (() => {
+		if (option?.hashKey) {
+			const cipher = crypto.createHash("sha256");
+			cipher.update(secret);
+			return cipher.digest();
 		}
 
-		const params = cookie[name].split(".");
-		if (params.length !== 3) {
-			throw new DecryptCookieError("invalid_cookie");
+		const key = Buffer.from(secret, "hex");
+		if (key.length * 8 !== 256) {
+			throw new DecryptCookieError("invalid_key");
 		}
+		return key;
+	})();
 
-		const authTag = Buffer.from(params[1], "hex");
-		if (authTag.length !== 16) {
-			throw new DecryptCookieError("invalid_cookie", "authTag");
-		}
+	const cookie = req.cookies;
+	if (!(name in cookie)) {
+		throw new DecryptCookieError("no_cookie");
+	}
 
-		const iv = Buffer.from(params[2], "hex");
-		if (iv.length !== 16) {
-			throw new DecryptCookieError("invalid_cookie", "iv");
-		}
+	const params = cookie[name].split(".");
+	if (params.length !== 3) {
+		throw new DecryptCookieError("invalid_cookie");
+	}
 
-		try {
-			const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
-			decipher.setAuthTag(authTag);
+	const authTag = Buffer.from(params[1], "hex");
+	if (authTag.length !== 16) {
+		throw new DecryptCookieError("invalid_cookie", "authTag");
+	}
 
-			const decrypted =
-				decipher.update(params[0], "hex", "utf8") + decipher.final("utf8");
-			return decrypted;
-		} catch (error) {
-			throw new DecryptCookieError("invalid_cookie", error);
-		}
-	});
+	const iv = Buffer.from(params[2], "hex");
+	if (iv.length !== 16) {
+		throw new DecryptCookieError("invalid_cookie", "iv");
+	}
 
-type EncryptCookieOptions = { hashKey?: boolean };
+	try {
+		const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+		decipher.setAuthTag(authTag);
 
-class EncryptCookieError extends Error {
+		const decrypted =
+			decipher.update(params[0], "hex", "utf8") + decipher.final("utf8");
+		return decrypted;
+	} catch (error) {
+		throw new DecryptCookieError("invalid_cookie", error);
+	}
+};
+
+export type EncryptCookieOptions = { hashKey?: boolean };
+
+export class EncryptCookieError extends Error {
 	type: "invalid_key" | "encrypt_failed";
 	internal?: string | Error;
 
@@ -99,35 +97,38 @@ class EncryptCookieError extends Error {
 	}
 }
 
-export const EncryptCookie = (
+export const encryptCookie = (
 	value: string,
 	secret: string,
-	{ hashKey }: EncryptCookieOptions,
-) =>
-	Effect.tryPromise(async () => {
-		const key = (() => {
-			if (hashKey) {
-				const cipher = crypto.createHash("sha256");
-				cipher.update(secret);
-				return cipher.digest();
-			}
-
-			const key = Buffer.from(secret, "hex");
-			if (key.length * 8 !== 256) {
-				throw new EncryptCookieError("invalid_key");
-			}
-			return key;
-		})();
-
-		try {
-			const iv = crypto.randomBytes(16);
-			const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-			const encrypted =
-				cipher.update(value, "utf-8", "hex") + cipher.final("hex");
-			const authTag = cipher.getAuthTag().toString("hex");
-
-			return `${encrypted}.${authTag}.${iv.toString("hex")}`;
-		} catch (error) {
-			throw new EncryptCookieError("encrypt_failed", error);
+	option?: EncryptCookieOptions,
+) => {
+	const key = (() => {
+		if (option?.hashKey) {
+			const cipher = crypto.createHash("sha256");
+			cipher.update(secret);
+			return cipher.digest();
 		}
-	});
+
+		const key = Buffer.from(secret, "hex");
+		if (key.length * 8 !== 256) {
+			return new EncryptCookieError("invalid_key");
+		}
+		return key;
+	})();
+
+	if (key instanceof EncryptCookieError) {
+		return key;
+	}
+
+	try {
+		const iv = crypto.randomBytes(16);
+		const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+		const encrypted =
+			cipher.update(value, "utf-8", "hex") + cipher.final("hex");
+		const authTag = cipher.getAuthTag().toString("hex");
+
+		return `${encrypted}.${authTag}.${iv.toString("hex")}`;
+	} catch (error) {
+		return new EncryptCookieError("encrypt_failed", error);
+	}
+};
