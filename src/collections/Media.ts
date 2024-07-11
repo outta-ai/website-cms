@@ -63,6 +63,11 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 		);
 
 		if (result.some((r) => r.status === "rejected")) {
+			console.error(
+				result
+					.filter((r) => r.status === "rejected")
+					.map((r) => r.status === "rejected" && r.reason),
+			);
 			throw new APIError(
 				"Failed to delete original files",
 				500,
@@ -82,6 +87,7 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 			await S3Create({ client, file, bucket, key: filename });
 			uploadedFiles.push({ ...file, object: filename });
 		} catch (e: unknown) {
+			console.error(e);
 			throw new APIError("Failed to upload file", 500, undefined, true);
 		}
 	}
