@@ -50,7 +50,7 @@ jobs:
 
       - name: Build and Push (main)
         if: github.ref_name == 'main'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REGISTRY_ALIAS: ${{ vars.REGISTRY_ALIAS }}
@@ -70,7 +70,7 @@ jobs:
 
       - name: Build and Push (develop)
         if: github.ref_name == 'develop'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REGISTRY_ALIAS: ${{ vars.REGISTRY_ALIAS }}
