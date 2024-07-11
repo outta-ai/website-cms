@@ -1,17 +1,16 @@
 import type { Request } from "express";
 
-import { Buffer } from "node:buffer";
 import crypto from "node:crypto";
 
 export type DecryptCookieOptions = { hashKey?: boolean };
 
 export class DecryptCookieError extends Error {
 	type: "invalid_key" | "no_cookie" | "invalid_cookie";
-	internal?: string | Error;
+	internal?: unknown;
 
 	constructor(
 		type: "invalid_key" | "no_cookie" | "invalid_cookie",
-		internal?: string | Error,
+		internal?: unknown,
 	) {
 		super(`Failed to get encrypted cookie: ${type}`);
 
@@ -20,7 +19,7 @@ export class DecryptCookieError extends Error {
 	}
 
 	toString() {
-		return `DecryptCookieError: ${this.type}${this.internal?.toString() || ""}`;
+		return `DecryptCookieError: ${this.type}${this.internal ?? ""}`;
 	}
 }
 
@@ -80,12 +79,9 @@ export type EncryptCookieOptions = { hashKey?: boolean };
 
 export class EncryptCookieError extends Error {
 	type: "invalid_key" | "encrypt_failed";
-	internal?: string | Error;
+	internal?: unknown;
 
-	constructor(
-		type: "invalid_key" | "encrypt_failed",
-		internal?: string | Error,
-	) {
+	constructor(type: "invalid_key" | "encrypt_failed", internal?: unknown) {
 		super(`Failed to get encrypted cookie: ${type}`);
 
 		this.type = type;
@@ -93,7 +89,7 @@ export class EncryptCookieError extends Error {
 	}
 
 	toString() {
-		return `EncryptCookieError: ${this.type}${this.internal?.toString() || ""}`;
+		return `EncryptCookieError: ${this.type}${this.internal || ""}`;
 	}
 }
 

@@ -8,14 +8,13 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { File } from "./getFiles";
 
 export function getS3Client() {
-	const hasCredentials =
-		!!process.env.S3_ACCESS_KEY_ID && !!process.env.S3_SECRET_ACCESS_KEY;
-	const credentials = hasCredentials
-		? {
-				accessKeyId: process.env.S3_ACCESS_KEY_ID,
-				secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-			}
-		: undefined;
+	const credentials =
+		!!process.env.S3_ACCESS_KEY_ID && !!process.env.S3_SECRET_ACCESS_KEY
+			? {
+					accessKeyId: process.env.S3_ACCESS_KEY_ID,
+					secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+				}
+			: undefined;
 
 	return typeof window === "undefined" && process.env.S3_REGION
 		? new S3Client({

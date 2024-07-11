@@ -54,6 +54,7 @@ export async function google(
 	});
 
 	if (memberByID.totalDocs === 1) {
+		// @ts-ignore: Type error occurs here on build, since Member is generated build time
 		return res.status(200).send(await createPublicToken(memberByID.docs[0]));
 	}
 
@@ -80,6 +81,7 @@ export async function google(
 	});
 
 	if (memberByEmail.totalDocs === 1) {
+		// @ts-ignore: Type error occurs here on build, since Member is generated build time
 		return res.status(200).send(await createPublicToken(memberByEmail.docs[0]));
 	}
 

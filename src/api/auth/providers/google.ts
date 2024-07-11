@@ -4,7 +4,6 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 
 import payload from "payload";
-import type { Member } from "payload/generated-types";
 import { createToken, type RefreshTokenPayload } from "..";
 import { createCodeChallenge, getCodeChallenge } from "../../../utils/auth";
 import { EncryptCookieError } from "../../../utils/cookies";
@@ -14,7 +13,7 @@ const GoogleTokenResponse = z.object({
 	expires_in: z.number(),
 	token_type: z.string(),
 	scope: z.string(),
-	refersh_token: z.string().optional(),
+	refresh_token: z.string().optional(),
 });
 
 const GoogleUserInfoResponse = z
@@ -53,12 +52,23 @@ export function config() {
 	if (!process.env.GOOGLE_OAUTH_CLIENT_SECRET) {
 		throw new Error("Missing GOOGLE_OAUTH_CLIENT_SECRET");
 	}
+
+	return {
+		baseUrl: process.env.BASE_URL,
+		secret: {
+			private: process.env.TOKEN_SECRET,
+			public: process.env.PUBLIC_TOKEN_SECRET,
+		},
+		clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
+		clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+	};
 }
 
 export async function signIn(req: Request, res: Response) {
+	const configs = config();
 	const state = crypto.randomUUID();
 
-	const challenge = createCodeChallenge(req, res, process.env.TOKEN_SECRET);
+	const challenge = createCodeChallenge(req, res, configs.secret.private);
 	if (challenge instanceof EncryptCookieError) {
 		console.error(challenge);
 		return res.status(500).send({
@@ -71,21 +81,22 @@ export async function signIn(req: Request, res: Response) {
 	}
 
 	const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-	url.searchParams.append("client_id", process.env.GOOGLE_OAUTH_CLIENT_ID);
+	url.searchParams.append("client_id", configs.clientId);
 	url.searchParams.append(
 		"redirect_uri",
 		`${process.env.BASE_URL}/outta/auth/google/callback`,
 	);
 	url.searchParams.append("response_type", "code");
 	url.searchParams.append("scope", "openid email profile");
-	url.searchParams.append("code_challenage_method", "S256");
-	url.searchParams.append("code_challenge", challenge);
-	url.searchParams.append("state", state);
+	// url.searchParams.append("code_challenge", challenge);
+	// url.searchParams.append("code_challenage_method", "S256");
+	url.searchParams.append("state", `${state}-google`);
+	url.searchParams.append("access_type", "offline");
 
 	res.cookie("OUTTA_OAUTH_STATE", state, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		sameSite: "lax",
 	});
 
 	res.status(200).send({
@@ -95,7 +106,13 @@ export async function signIn(req: Request, res: Response) {
 }
 
 export async function callback(req: Request, res: Response) {
-	if (!("OUTTA_OAUTH_STATE" in req.cookies) || !req.cookies.OUTTA_OAUTH_STATE) {
+	const configs = config();
+
+	if (
+		!req.cookies ||
+		!("OUTTA_OAUTH_STATE" in req.cookies) ||
+		!req.cookies.OUTTA_OAUTH_STATE
+	) {
 		return res.status(400).send({
 			result: false,
 			error: {
@@ -106,7 +123,7 @@ export async function callback(req: Request, res: Response) {
 	}
 	const state = req.cookies.OUTTA_OAUTH_STATE;
 
-	const url = new URL(req.url);
+	const url = new URL(req.url, process.env.BASE_URL);
 	if (url.searchParams.get("state") !== `${state}-google`) {
 		return res.status(400).send({
 			result: false,
@@ -128,7 +145,7 @@ export async function callback(req: Request, res: Response) {
 		});
 	}
 
-	const verifier = getCodeChallenge(req, res, process.env.TOKEN_SECRET);
+	const verifier = getCodeChallenge(req, res, configs.secret.private);
 	if (!verifier) {
 		return res.status(400).send({
 			result: false,
@@ -153,32 +170,19 @@ export async function callback(req: Request, res: Response) {
 
 	const params = new URLSearchParams();
 	params.append("code", code);
-	params.append("client_id", process.env.GOOGLE_OAUTH_CLIENT_ID);
-	params.append("client_secret", process.env.GOOGLE_OAUTH_CLIENT_SECRET);
+	params.append("client_id", configs.clientId);
+	params.append("client_secret", configs.clientSecret);
 	params.append(
 		"redirect_uri",
 		`${process.env.BASE_URL}/outta/auth/google/callback`,
 	);
 	params.append("grant_type", "authorization_code");
-	params.append("code_verifier", verifier);
+	// params.append("code_verifier", verifier);
 
-	const tokenResponse = await (() => {
-		try {
-			() =>
-				fetch("https://oauth2.googleapis.com/token", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/x-www-form-urlencoded",
-					},
-					body: params,
-				});
-		} catch (error) {
-			console.error(error);
-			return null;
-		}
-	})();
+	const tokenResponse = await fetchGoogleToken(params);
 
 	if (!tokenResponse) {
+		console.error("No token response");
 		return res.status(500).send({
 			result: false,
 			error: {
@@ -200,6 +204,7 @@ export async function callback(req: Request, res: Response) {
 	})();
 
 	if (!tokenData) {
+		console.error("Wrong token response", tokenText);
 		return res.status(502).send({
 			result: false,
 			error: {
@@ -209,20 +214,7 @@ export async function callback(req: Request, res: Response) {
 		});
 	}
 
-	const userInfoResponse = await (() => {
-		try {
-			() =>
-				fetch("https://www.googleapis.com/userinfo/v2/me", {
-					method: "GET",
-					headers: {
-						Authorization: `Bearer ${tokenData.access_token}`,
-					},
-				});
-		} catch (error) {
-			console.error(error);
-			return null;
-		}
-	})();
+	const userInfoResponse = await fetchGoogleUserInfo(tokenData.access_token);
 
 	if (!userInfoResponse) {
 		return res.status(502).send({
@@ -244,6 +236,16 @@ export async function callback(req: Request, res: Response) {
 			return null;
 		}
 	})();
+
+	if (!userInfoData) {
+		return res.status(502).send({
+			result: false,
+			error: {
+				code: "invalid_response",
+				message: "Invalid response from Google",
+			},
+		});
+	}
 
 	const memberByID = await payload.find({
 		collection: "members",
@@ -304,27 +306,44 @@ export async function callback(req: Request, res: Response) {
 	const member =
 		memberByID.totalDocs === 1 ? memberByID.docs[0] : memberByEmail.docs[0];
 
+	if (memberByID.totalDocs !== 1) {
+		await payload.update({
+			collection: "members",
+			id: member.id,
+			data: {
+				googleId: userInfoData.id,
+			},
+		});
+	}
+
 	const { access_token, refresh_token } = await createToken(
-		member as unknown as Member,
-		tokenData.refersh_token
+		configs.secret.public,
+		member,
+		tokenData.refresh_token
 			? {
 					provider: "google",
-					token: tokenData.refersh_token,
+					token: tokenData.refresh_token,
 				}
 			: undefined,
 	);
 
-	res.cookie("OUTTA_AUTH_TOKEN", access_token, {
+	res.cookie("OUTTA_OAUTH_STATE", "", { maxAge: 0 });
+	res.cookie("OUTTA_OAUTH_CODE_VERIFIER", "", { maxAge: 0 });
+	res.cookie("OUTTA_REDIRECT_URI", "", { maxAge: 0 });
+
+	res.cookie("OUTTA_ACCESS_TOKEN", access_token, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		sameSite: "lax",
+		maxAge: 1 * 60 * 60 * 1000,
 	});
 
 	refresh_token &&
 		res.cookie("OUTTA_REFRESH_TOKEN", refresh_token, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict",
+			sameSite: "lax",
+			maxAge: 2 * 7 * 24 * 60 * 60 * 1000,
 		});
 
 	const redirect_uri = req.cookies.OUTTA_REDIRECT_URI;
@@ -332,31 +351,19 @@ export async function callback(req: Request, res: Response) {
 }
 
 export async function refresh(
-	req: Request,
+	_req: Request,
 	res: Response,
-	tokenPayload: RefreshTokenPayload,
+	tokenPayload: z.infer<typeof RefreshTokenPayload>,
 ) {
+	const configs = config();
+
 	const params = new URLSearchParams();
-	params.append("client_id", process.env.GOOGLE_OAUTH_CLIENT_ID);
-	params.append("client_secret", process.env.GOOGLE_OAUTH_CLIENT_SECRET);
+	params.append("client_id", configs.clientId);
+	params.append("client_secret", configs.clientSecret);
 	params.append("refresh_token", tokenPayload.authentication.token);
 	params.append("grant_type", "refresh_token");
 
-	const tokenResponse = await (() => {
-		try {
-			() =>
-				fetch("https://oauth2.googleapis.com/token", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/x-www-form-urlencoded",
-					},
-					body: params,
-				});
-		} catch (error) {
-			console.error(error);
-			return null;
-		}
-	})();
+	const tokenResponse = await fetchGoogleToken(params);
 
 	if (!tokenResponse) {
 		return res.status(500).send({
@@ -389,20 +396,7 @@ export async function refresh(
 		});
 	}
 
-	const userInfoResponse = await (() => {
-		try {
-			() =>
-				fetch("https://www.googleapis.com/userinfo/v2/me", {
-					method: "GET",
-					headers: {
-						Authorization: `Bearer ${tokenData.access_token}`,
-					},
-				});
-		} catch (error) {
-			console.error(error);
-			return null;
-		}
-	})();
+	const userInfoResponse = await fetchGoogleUserInfo(tokenData.access_token);
 
 	if (!userInfoResponse) {
 		return res.status(502).send({
@@ -425,12 +419,26 @@ export async function refresh(
 		}
 	})();
 
-	const member = await payload.findByID({
+	if (!userInfoData) {
+		return res.status(502).send({
+			result: false,
+			error: {
+				code: "invalid_response",
+				message: "Invalid response from Google",
+			},
+		});
+	}
+
+	const member = await payload.find({
 		collection: "members",
-		id: userInfoData.id,
+		where: {
+			googleId: {
+				equals: userInfoData.id,
+			},
+		},
 	});
 
-	if (!member) {
+	if (member.totalDocs === 0) {
 		return res.status(401).send({
 			result: false,
 			error: {
@@ -440,7 +448,7 @@ export async function refresh(
 		});
 	}
 
-	if (member.id !== tokenPayload.member) {
+	if (member.docs[0].id !== tokenPayload.member) {
 		return res.status(403).send({
 			result: false,
 			error: {
@@ -451,27 +459,59 @@ export async function refresh(
 	}
 
 	const { access_token, refresh_token } = await createToken(
-		member as unknown as Member,
-		tokenData.refersh_token
+		configs.secret.public,
+		member.docs[0],
+		tokenData.refresh_token
 			? {
 					provider: "google",
-					token: tokenData.refersh_token,
+					token: tokenData.refresh_token,
 				}
 			: undefined,
 	);
 
-	res.cookie("OUTTA_AUTH_TOKEN", access_token, {
+	res.cookie("OUTTA_ACCESS_TOKEN", access_token, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		sameSite: "lax",
+		maxAge: 1 * 60 * 60 * 1000,
 	});
 
 	refresh_token &&
 		res.cookie("OUTTA_REFRESH_TOKEN", refresh_token, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict",
+			sameSite: "lax",
+			maxAge: 2 * 7 * 24 * 60 * 60 * 1000,
 		});
 
 	return res.status(200).send({ result: true });
+}
+
+async function fetchGoogleToken(params: URLSearchParams) {
+	try {
+		return await fetch("https://oauth2.googleapis.com/token", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			body: params,
+		});
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
+}
+
+async function fetchGoogleUserInfo(token: string) {
+	try {
+		return await fetch("https://www.googleapis.com/userinfo/v2/me", {
+			method: "GET",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		});
+	} catch (error) {
+		console.error(error);
+		return null;
+	}
 }
