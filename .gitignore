@@ -7,3 +7,4 @@ node_modules
 docker-compose.yml
 ./data
 payload-types.ts
+payload-zod.ts

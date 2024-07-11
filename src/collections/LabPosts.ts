@@ -34,7 +34,7 @@ const LabPosts: CollectionConfig = {
 		},
 		{
 			type: "array",
-			name: "attachements",
+			name: "attachments",
 			label: "첨부파일",
 			fields: [
 				{
