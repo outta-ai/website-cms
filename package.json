@@ -1,18 +1,18 @@
 {
 	"name": "outta-website-cms",
-	"description": "OUTTA main website CMS, provided with Payload CMS",
 	"version": "1.0.0",
-	"main": "dist/server.js",
+	"description": "OUTTA main website CMS, provided with Payload CMS",
 	"license": "MIT",
+	"main": "dist/server.js",
 	"scripts": {
-		"dev": "cross-env PAYLOAD_CONFIG_PATH=src/payload.config.ts nodemon",
+		"build": "pnpm generate:types && pnpm copyfiles && pnpm build:payload && pnpm build:server",
 		"build:payload": "cross-env PAYLOAD_CONFIG_PATH=src/payload.config.ts payload build",
 		"build:server": "tsc",
-		"build": "pnpm generate:types && pnpm copyfiles && pnpm build:payload && pnpm build:server",
-		"serve": "cross-env PAYLOAD_CONFIG_PATH=dist/payload.config.js NODE_ENV=production node dist/server.js",
 		"copyfiles": "copyfiles -u 1 \"src/**/*.{html,css,scss,ttf,woff,woff2,eot,svg,jpg,png}\" dist/",
+		"dev": "cross-env PAYLOAD_CONFIG_PATH=src/payload.config.ts nodemon",
+		"generate:graphQLSchema": "cross-env PAYLOAD_CONFIG_PATH=src/payload.config.ts payload generate:graphQLSchema",
 		"generate:types": "cross-env PAYLOAD_CONFIG_PATH=src/payload.config.ts payload generate:types && pnpm ts-to-zod src/payload-types.ts src/payload-zod.ts",
-		"generate:graphQLSchema": "cross-env PAYLOAD_CONFIG_PATH=src/payload.config.ts payload generate:graphQLSchema"
+		"serve": "cross-env PAYLOAD_CONFIG_PATH=dist/payload.config.js NODE_ENV=production node dist/server.js"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.609.0",
@@ -28,6 +28,7 @@
 		"@tiptap/react": "^2.4.0",
 		"@tiptap/starter-kit": "^2.4.0",
 		"aws-crt": "^1.21.3",
+		"classnames": "^2.5.1",
 		"cookie-parser": "^1.4.6",
 		"cors": "^2.8.5",
 		"cross-env": "^7.0.3",
@@ -53,7 +54,6 @@
 		"@types/react": "^18.3.3",
 		"@types/react-dom": "^18.3.0",
 		"autoprefixer": "^10.4.19",
-		"classnames": "^2.5.1",
 		"copyfiles": "^2.4.1",
 		"nodemon": "^3.1.4",
 		"postcss": "^8.4.39",

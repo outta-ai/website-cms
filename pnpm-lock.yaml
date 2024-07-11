@@ -47,6 +47,9 @@ importers:
       aws-crt:
         specifier: ^1.21.3
         version: 1.21.3
+      classnames:
+        specifier: ^2.5.1
+        version: 2.5.1
       cookie-parser:
         specifier: ^1.4.6
         version: 1.4.6
@@ -117,9 +120,6 @@ importers:
       autoprefixer:
         specifier: ^10.4.19
         version: 10.4.19(postcss@8.4.39)
-      classnames:
-        specifier: ^2.5.1
-        version: 2.5.1
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
