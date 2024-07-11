@@ -76,7 +76,7 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 	for (const file of files) {
 		const ext = path.extname(file.filename);
 		const uuid = crypto.randomUUID();
-		const filename = `${uuid}${ext}`;
+		const filename = `media/${uuid}${ext}`;
 
 		try {
 			await S3Create({ client, file, bucket, key: filename });
