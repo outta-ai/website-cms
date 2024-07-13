@@ -15,6 +15,7 @@ import Members from "./collections/Members";
 import Posts from "./collections/Posts";
 import Projects from "./collections/Projects";
 
+import Comments from "./collections/Comments";
 import Information from "./globals/info";
 import WebsiteLab from "./globals/website-lab";
 import Link from "./globals/website-link";
@@ -24,6 +25,7 @@ import WebsitePlayground from "./globals/website-playground";
 export default buildConfig({
 	db: mongooseAdapter({
 		url: process.env.MONGODB_URI || "",
+		transactionOptions: {},
 	}),
 	editor: slateEditor({}),
 	admin: {
@@ -50,6 +52,7 @@ export default buildConfig({
 		Projects,
 		Boards,
 		Posts,
+		Comments,
 	],
 	globals: [WebsiteMain, WebsiteLab, WebsitePlayground, Information, Link],
 	typescript: {

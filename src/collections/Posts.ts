@@ -5,14 +5,18 @@ import type {
 	Where,
 } from "payload/types";
 import { TiptapEditor } from "../components/TiptapEditor";
+import { checkAuth } from "../utils/auth";
 import { checkBoardAccess, checkBoardAdminAccess } from "./Boards";
 
-const checkPostAccess =
+export const checkPostAccess =
 	(action: "read" | "update" | "create" | "delete"): Access & FieldAccess =>
 	async ({ req, id }) => {
 		const { payload, user } = req;
 
 		if (user) return true;
+
+		const authResult = await checkAuth(req, process.env.PUBLIC_TOKEN_SECRET);
+		if (!authResult.result) return false;
 
 		if (id) {
 			const post = await payload.findByID({
@@ -25,11 +29,11 @@ const checkPostAccess =
 
 			const result = await checkBoardAccess({ req, id: boardId });
 
-			if (typeof result !== "boolean") {
+			if (typeof result !== "boolean" || !result) {
 				return false;
 			}
 
-			if (action === "read") {
+			if (action === "read" || action === "create") {
 				return result;
 			}
 
@@ -38,10 +42,13 @@ const checkPostAccess =
 				return false;
 			}
 
-			return post.author === user?.id || adminAccess;
+			const author =
+				typeof post.author === "string" ? post.author : post.author?.id;
+			return author === authResult.data.member.id || adminAccess;
 		}
 
-		if (!id && req.query.where) {
+		const filteredList = !id && req.query.where && action === "read";
+		if (filteredList) {
 			const where = req.query.where as Where;
 			const limit = Number(req.query.limit);
 			const page = Number(req.query.page);
@@ -57,20 +64,25 @@ const checkPostAccess =
 				posts.docs.map((post) => {
 					const boardId =
 						typeof post.board === "string" ? post.board : post.board?.id;
-					const check =
-						action === "read" ? checkBoardAccess : checkBoardAdminAccess;
-					return check({ req, id: boardId });
+					return checkBoardAccess({ req, id: boardId });
 				}),
 			);
 
-			if (action === "read") {
-				return (
-					promises.every((result) => result.status === "fulfilled") &&
-					promises.some(
-						(result) => result.status === "fulfilled" && result.value,
-					)
-				);
-			}
+			return (
+				promises.every((result) => result.status === "fulfilled") &&
+				promises.some((result) => result.status === "fulfilled" && result.value)
+			);
+		}
+
+		const createNew = !id && action === "create";
+		if (createNew) {
+			const boardId = req.body.board;
+
+			if (!boardId) return false;
+
+			const result = await checkBoardAccess({ req, id: boardId });
+
+			return result as boolean;
 		}
 
 		return false;
@@ -82,7 +94,19 @@ const Posts: CollectionConfig = {
 		read: checkPostAccess("read"),
 		create: checkPostAccess("create"),
 		update: checkPostAccess("update"),
-		delete: checkPostAccess("delete"),
+		delete: ({ req }) => !!req.user,
+	},
+	hooks: {
+		beforeOperation: [
+			async ({ req, operation, args }) => {
+				if (req.user) return args;
+
+				if (operation === "read" || operation === "count") {
+					args.where = { ...args.where, deletedAt: { exists: false } };
+				}
+				return args;
+			},
+		],
 	},
 	labels: {
 		singular: "유저 게시물",
@@ -123,47 +147,9 @@ const Posts: CollectionConfig = {
 			required: true,
 		},
 		{
-			type: "array",
-			name: "comments",
-			label: "댓글",
-			fields: [
-				{
-					type: "textarea",
-					name: "content",
-					label: "내용",
-				},
-				{
-					type: "relationship",
-					name: "author",
-					label: "작성자",
-					relationTo: "members",
-					required: true,
-				},
-				{
-					type: "date",
-					name: "createdAt",
-					label: "작성일",
-					required: true,
-					defaultValue: () => new Date(),
-					admin: {
-						date: {
-							pickerAppearance: "dayAndTime",
-						},
-					},
-				},
-				{
-					type: "date",
-					name: "updatedAt",
-					label: "최종 수정일",
-					required: true,
-					defaultValue: () => new Date(),
-					admin: {
-						date: {
-							pickerAppearance: "dayAndTime",
-						},
-					},
-				},
-			],
+			type: "date",
+			name: "deletedAt",
+			label: "삭제일",
 		},
 	],
 };

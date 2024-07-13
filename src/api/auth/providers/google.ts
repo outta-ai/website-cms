@@ -113,59 +113,38 @@ export async function callback(req: Request, res: Response) {
 		!("OUTTA_OAUTH_STATE" in req.cookies) ||
 		!req.cookies.OUTTA_OAUTH_STATE
 	) {
-		return res.status(400).send({
-			result: false,
-			error: {
-				code: "no_state",
-				message: "No state found",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=no_state&message=No%20state%20found`,
+		);
 	}
 	const state = req.cookies.OUTTA_OAUTH_STATE;
 
 	const url = new URL(req.url, process.env.BASE_URL);
 	if (url.searchParams.get("state") !== `${state}-google`) {
-		return res.status(400).send({
-			result: false,
-			error: {
-				code: "invalid_state",
-				message: "Invalid state",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=invalid_state&message=Invalid%20state`,
+		);
 	}
 
 	const code = url.searchParams.get("code");
 	if (!code) {
-		return res.status(400).send({
-			result: false,
-			error: {
-				code: "no_code",
-				message: "No code found",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=no_code&message=No%20code%20found`,
+		);
 	}
 
 	const verifier = getCodeChallenge(req, res, configs.secret.private);
 	if (!verifier) {
-		return res.status(400).send({
-			result: false,
-			error: {
-				code: "no_code_verifier",
-				message: "No code verifier found",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=no_code_verifier&message=No%20code%20verifier%20found`,
+		);
 	}
 
 	if (verifier instanceof Error) {
 		console.error(verifier);
-		return res.status(500).send({
-			result: false,
-			error: {
-				code: "internal_error",
-				message:
-					"An internal server error occurred while getting code verifier",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=internal_error&message=An%20internal%20server%20error%20occurred%20while%20getting%20code%20verifier`,
+		);
 	}
 
 	const params = new URLSearchParams();
@@ -183,13 +162,9 @@ export async function callback(req: Request, res: Response) {
 
 	if (!tokenResponse) {
 		console.error("No token response");
-		return res.status(500).send({
-			result: false,
-			error: {
-				code: "internal_error",
-				message: "An internal server error occurred while getting token",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=internal_error&message=An%20internal%20server%20error%20occurred%20while%20getting%20token`,
+		);
 	}
 
 	const tokenText = await tokenResponse.text();
@@ -205,25 +180,17 @@ export async function callback(req: Request, res: Response) {
 
 	if (!tokenData) {
 		console.error("Wrong token response", tokenText);
-		return res.status(502).send({
-			result: false,
-			error: {
-				code: "invalid_response",
-				message: "Invalid response from Google",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
+		);
 	}
 
 	const userInfoResponse = await fetchGoogleUserInfo(tokenData.access_token);
 
 	if (!userInfoResponse) {
-		return res.status(502).send({
-			result: false,
-			error: {
-				code: "invalid_response",
-				message: "Invalid response from Google",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
+		);
 	}
 
 	const userInfoText = await userInfoResponse.text();
@@ -238,13 +205,9 @@ export async function callback(req: Request, res: Response) {
 	})();
 
 	if (!userInfoData) {
-		return res.status(502).send({
-			result: false,
-			error: {
-				code: "invalid_response",
-				message: "Invalid response from Google",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
+		);
 	}
 
 	const memberByID = await payload.find({
@@ -270,13 +233,9 @@ export async function callback(req: Request, res: Response) {
 			"Multiple users found with the same Google ID",
 			userInfoData.id,
 		);
-		return res.status(500).send({
-			result: false,
-			error: {
-				code: "internal_error",
-				message: "Internal Server Error occurred",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=internal_error&message=Internal%20Server%20Error%20occurred`,
+		);
 	}
 
 	if (memberByEmail.totalDocs > 1) {
@@ -284,23 +243,15 @@ export async function callback(req: Request, res: Response) {
 			"Multiple users found with the same email",
 			userInfoData.email,
 		);
-		return res.status(500).send({
-			result: false,
-			error: {
-				code: "internal_error",
-				message: "Internal Server Error occurred",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=internal_error&message=Internal%20Server%20Error%20occurred`,
+		);
 	}
 
 	if (memberByID.totalDocs === 0 && memberByEmail.totalDocs === 0) {
-		return res.status(401).send({
-			result: false,
-			error: {
-				code: "no_user",
-				message: "No user found",
-			},
-		});
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=no_user&message=No%20user%20found`,
+		);
 	}
 
 	const member =

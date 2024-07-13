@@ -154,7 +154,7 @@ router.get("/refresh", async (req, res) => {
 				payload: RefreshTokenPayload.passthrough().parse(token.payload),
 			};
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 			return null;
 		}
 	})();

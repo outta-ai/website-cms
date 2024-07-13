@@ -11,6 +11,7 @@ import type {
 	TypeWithID,
 } from "payload/types";
 
+import { checkAuth } from "../utils/auth";
 import { getFiles, type File } from "../utils/getFiles";
 import { S3Create, S3Delete, getS3Client } from "../utils/s3";
 
@@ -176,6 +177,12 @@ const Attachments: CollectionConfig = {
 	],
 	access: {
 		read: () => true,
+		create: async ({ req }) => {
+			if (req.user) return true;
+
+			const authResult = await checkAuth(req, process.env.PUBLIC_TOKEN_SECRET);
+			return authResult.result;
+		},
 	},
 };
 
