@@ -115,7 +115,7 @@ const Posts: CollectionConfig = {
 						process.env.PUBLIC_TOKEN_SECRET,
 					);
 					if (!authResult.result) return args;
-					args.author = authResult.data.member.id;
+					args.data = { ...args.data, author: authResult.data.member.id };
 				}
 
 				return args;
