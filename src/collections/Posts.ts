@@ -68,6 +68,10 @@ export const checkPostAccess =
 				}),
 			);
 
+			if (promises.length === 0) {
+				return true;
+			}
+
 			return (
 				promises.every((result) => result.status === "fulfilled") &&
 				promises.some((result) => result.status === "fulfilled" && result.value)
