@@ -108,6 +108,16 @@ const Posts: CollectionConfig = {
 				if (operation === "read" || operation === "count") {
 					args.where = { ...args.where, deletedAt: { exists: false } };
 				}
+
+				if (operation === "create") {
+					const authResult = await checkAuth(
+						req,
+						process.env.PUBLIC_TOKEN_SECRET,
+					);
+					if (!authResult.result) return args;
+					args.author = authResult.data.member.id;
+				}
+
 				return args;
 			},
 		],
