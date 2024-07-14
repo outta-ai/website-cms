@@ -6,8 +6,8 @@ const Members: CollectionConfig = {
 		read: () => true,
 	},
 	admin: {
-		useAsTitle: "name",
-		defaultColumns: ["name"],
+		useAsTitle: "adminTitle",
+		defaultColumns: ["name", "email"],
 		group: "Users",
 	},
 	fields: [
@@ -42,6 +42,32 @@ const Members: CollectionConfig = {
 			type: "upload",
 			name: "profile",
 			relationTo: "media",
+		},
+		{
+			type: "text",
+			name: "adminTitle",
+			admin: {
+				hidden: true,
+			},
+			hooks: {
+				beforeChange: [
+					({ siblingData }) => {
+						if ("adminTitle" in siblingData) {
+							siblingData.adminTitle = undefined;
+						}
+					},
+				],
+				afterRead: [
+					({ data }) => {
+						return `${data?.name || "(이름 없음)"} (${data?.email || "이메일 없음"})`;
+					},
+				],
+			},
+		},
+		{
+			type: "textarea",
+			name: "memo",
+			label: "메모",
 		},
 	],
 };
