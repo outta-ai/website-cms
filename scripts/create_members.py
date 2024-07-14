@@ -5,8 +5,8 @@ def main():
     # token = input("payload-token Cookie: ")
     # memo = input("Memo: ")
 
-    server = "https://api.outta.ai"
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2MGI0NTkwYWM5ZGRhYWYyYWZjMzdlZiIsImNvbGxlY3Rpb24iOiJhZG1pbnMiLCJlbWFpbCI6ImFkbWluQG91dHRhLmFpIiwiaWF0IjoxNzIwOTYwMzI0LCJleHAiOjE3MjA5Njc1MjR9.6W6bGTap2Yzp75fm_L0M-9cRCafi5uhBqfjSiGqcxY0"
+    server = "http://localhost:3001"
+    token = ""
     memo = "OUTTA 3회 부트캠프 (2024) 데이터반"
 
     if not server.startswith('http'):
