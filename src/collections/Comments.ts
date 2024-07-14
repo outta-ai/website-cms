@@ -126,6 +126,17 @@ const Comments: CollectionConfig = {
 				return data;
 			},
 		],
+		beforeOperation: [
+			async ({ req, operation, args }) => {
+				if (req.user) return args;
+
+				if (operation === "read" || operation === "count") {
+					args.where = { ...args.where, deletedAt: { exists: false } };
+				}
+
+				return args;
+			},
+		],
 	},
 	labels: {
 		singular: "유저 댓글",
