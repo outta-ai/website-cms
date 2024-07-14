@@ -110,11 +110,24 @@ export async function callback(req: Request, res: Response) {
 
 	if (
 		!req.cookies ||
+		!("OUTTA_REDIRECT_URI" in req.cookies) ||
+		!req.cookies.OUTTA_REDIRECT_URI
+	) {
+		return res.redirect(
+			`${process.env.BASE_URL}/auth/login?error=no_redirect_uri&message=No%20redirect%20URI%20found`,
+		);
+	}
+
+	const redirect_uri = req.cookies.OUTTA_REDIRECT_URI;
+	const baseUrl = new URL(redirect_uri).origin;
+
+	if (
+		!req.cookies ||
 		!("OUTTA_OAUTH_STATE" in req.cookies) ||
 		!req.cookies.OUTTA_OAUTH_STATE
 	) {
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=no_state&message=No%20state%20found`,
+			`${baseUrl}/auth/login?error=no_state&message=No%20state%20found`,
 		);
 	}
 	const state = req.cookies.OUTTA_OAUTH_STATE;
@@ -122,28 +135,28 @@ export async function callback(req: Request, res: Response) {
 	const url = new URL(req.url, process.env.BASE_URL);
 	if (url.searchParams.get("state") !== `${state}-google`) {
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=invalid_state&message=Invalid%20state`,
+			`${baseUrl}/auth/login?error=invalid_state&message=Invalid%20state`,
 		);
 	}
 
 	const code = url.searchParams.get("code");
 	if (!code) {
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=no_code&message=No%20code%20found`,
+			`${baseUrl}/auth/login?error=no_code&message=No%20code%20found`,
 		);
 	}
 
 	const verifier = getCodeChallenge(req, res, configs.secret.private);
 	if (!verifier) {
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=no_code_verifier&message=No%20code%20verifier%20found`,
+			`${baseUrl}/auth/login?error=no_code_verifier&message=No%20code%20verifier%20found`,
 		);
 	}
 
 	if (verifier instanceof Error) {
 		console.error(verifier);
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=internal_error&message=An%20internal%20server%20error%20occurred%20while%20getting%20code%20verifier`,
+			`${baseUrl}/auth/login?error=internal_error&message=An%20internal%20server%20error%20occurred%20while%20getting%20code%20verifier`,
 		);
 	}
 
@@ -163,7 +176,7 @@ export async function callback(req: Request, res: Response) {
 	if (!tokenResponse) {
 		console.error("No token response");
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=internal_error&message=An%20internal%20server%20error%20occurred%20while%20getting%20token`,
+			`${baseUrl}/auth/login?error=internal_error&message=An%20internal%20server%20error%20occurred%20while%20getting%20token`,
 		);
 	}
 
@@ -181,7 +194,7 @@ export async function callback(req: Request, res: Response) {
 	if (!tokenData) {
 		console.error("Wrong token response", tokenText);
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
+			`${baseUrl}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
 		);
 	}
 
@@ -189,7 +202,7 @@ export async function callback(req: Request, res: Response) {
 
 	if (!userInfoResponse) {
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
+			`${baseUrl}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
 		);
 	}
 
@@ -206,7 +219,7 @@ export async function callback(req: Request, res: Response) {
 
 	if (!userInfoData) {
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
+			`${baseUrl}/auth/login?error=invalid_response&message=Invalid%20response%20from%20Google`,
 		);
 	}
 
@@ -234,7 +247,7 @@ export async function callback(req: Request, res: Response) {
 			userInfoData.id,
 		);
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=internal_error&message=Internal%20Server%20Error%20occurred`,
+			`${baseUrl}/auth/login?error=internal_error&message=Internal%20Server%20Error%20occurred`,
 		);
 	}
 
@@ -244,13 +257,13 @@ export async function callback(req: Request, res: Response) {
 			userInfoData.email,
 		);
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=internal_error&message=Internal%20Server%20Error%20occurred`,
+			`${baseUrl}/auth/login?error=internal_error&message=Internal%20Server%20Error%20occurred`,
 		);
 	}
 
 	if (memberByID.totalDocs === 0 && memberByEmail.totalDocs === 0) {
 		return res.redirect(
-			`${process.env.BASE_URL}/auth/login?error=no_user&message=No%20user%20found`,
+			`${baseUrl}/auth/login?error=no_user&message=No%20user%20found`,
 		);
 	}
 
@@ -296,8 +309,7 @@ export async function callback(req: Request, res: Response) {
 			sameSite: "lax",
 			maxAge: 2 * 7 * 24 * 60 * 60 * 1000,
 		});
-
-	const redirect_uri = req.cookies.OUTTA_REDIRECT_URI;
+  
 	return res.redirect(redirect_uri);
 }
 
