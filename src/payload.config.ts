@@ -44,7 +44,7 @@ export default buildConfig({
 		css: path.resolve(__dirname, "styles/admin.css"),
 	},
 	rateLimit: {
-		skip: (req) => !!req.user,
+		skip: () => true,
 	},
 	collections: [
 		Members,
