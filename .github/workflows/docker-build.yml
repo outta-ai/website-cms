@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - develop
   workflow_dispatch:
 
 permissions:
@@ -47,8 +48,9 @@ jobs:
         id: sha_short
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Build and Push
-        uses: docker/build-push-action@v5
+      - name: Build and Push (main)
+        if: github.ref_name == 'main'
+        uses: docker/build-push-action@v6
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REGISTRY_ALIAS: ${{ vars.REGISTRY_ALIAS }}
@@ -65,3 +67,23 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:latest
+
+      - name: Build and Push (develop)
+        if: github.ref_name == 'develop'
+        uses: docker/build-push-action@v6
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REGISTRY_ALIAS: ${{ vars.REGISTRY_ALIAS }}
+          REPOSITORY: ${{ vars.REPOSITORY }}
+          IMAGE_TAG: ${{ steps.sha_short.outputs.sha_short }}
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          provenance: false
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.REGISTRY_ALIAS }}/${{ env.REPOSITORY }}:develop

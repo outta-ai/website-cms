@@ -23,6 +23,11 @@ const Members: CollectionConfig = {
 			label: "이메일",
 		},
 		{
+			type: "text",
+			name: "googleId",
+			label: "구글 ID",
+		},
+		{
 			type: "array",
 			name: "works",
 			label: "이력",

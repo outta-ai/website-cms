@@ -11,9 +11,8 @@ import type {
 	TypeWithID,
 } from "payload/types";
 
-import { S3Client } from "@aws-sdk/client-s3";
 import { getFiles, type File } from "../utils/getFiles";
-import { S3Create, S3Delete } from "../utils/s3";
+import { S3Create, S3Delete, getS3Client } from "../utils/s3";
 
 type S3FileData = FileData &
 	TypeWithID & {
@@ -27,14 +26,16 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 	originalDoc,
 }) => {
 	const bucket = process.env.S3_BUCKET;
-	const client = new S3Client({
-		credentials: {
-			accessKeyId: process.env.S3_ACCESS_KEY_ID,
-			secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-		},
-		region: process.env.S3_REGION,
-		endpoint: process.env.S3_ENDPOINT,
-	});
+	if (!bucket) {
+		console.error("S3_BUCKET is not defined");
+		throw new APIError("Internal Server Error", 500, undefined, true);
+	}
+
+	const client = getS3Client();
+	if (!client) {
+		console.error("S3 client is not defined");
+		throw new APIError("Internal Server Error", 500, undefined, true);
+	}
 
 	const files = getFiles({ data, req });
 
@@ -49,9 +50,9 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 			originalFiles.push(originalDoc.object);
 		} else if (typeof originalDoc.filename === "object") {
 			originalFiles.push(
-				...Object.values(originalDoc.sizes).map(
-					(resizedFileData) => resizedFileData?.filename,
-				),
+				...(Object.values(originalDoc.sizes)
+					.map((resizedFileData) => resizedFileData?.filename)
+					.filter((filename) => !!filename) as string[]),
 			);
 		}
 
@@ -62,6 +63,11 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 		);
 
 		if (result.some((r) => r.status === "rejected")) {
+			console.error(
+				result
+					.filter((r) => r.status === "rejected")
+					.map((r) => r.status === "rejected" && r.reason),
+			);
 			throw new APIError(
 				"Failed to delete original files",
 				500,
@@ -75,30 +81,31 @@ const beforeChange: CollectionBeforeChangeHook<S3FileData> = async ({
 	for (const file of files) {
 		const ext = path.extname(file.filename);
 		const uuid = crypto.randomUUID();
-		const filename = `${uuid}${ext}`;
+		const filename = `media/${uuid}${ext}`;
 
 		try {
 			await S3Create({ client, file, bucket, key: filename });
 			uploadedFiles.push({ ...file, object: filename });
 		} catch (e: unknown) {
+			console.error(e);
 			throw new APIError("Failed to upload file", 500, undefined, true);
 		}
 	}
 
 	const finalData: S3FileData = {
-		id: data.id,
+		id: data.id || "",
 		filename: uploadedFiles[0].filename,
 		filesize: uploadedFiles[0].filesize,
 		mimeType: uploadedFiles[0].mimeType,
 		width: uploadedFiles[0].width,
 		height: uploadedFiles[0].height,
 		sizes: {},
-		object: uploadedFiles[0].object,
+		object: uploadedFiles[0].object || "",
 	};
 
 	for (const file of uploadedFiles.slice(1)) {
 		finalData.sizes[file.filename] = {
-			filename: file.object,
+			filename: file.object || "",
 			filesize: file.filesize,
 			mimeType: file.mimeType,
 			width: file.width,
@@ -124,14 +131,16 @@ const afterRead: CollectionAfterReadHook<S3FileData> = async ({ doc }) => {
 // Handle file deletion
 const afterDelete: CollectionAfterDeleteHook<S3FileData> = async ({ doc }) => {
 	const bucket = process.env.S3_BUCKET;
-	const client = new S3Client({
-		credentials: {
-			accessKeyId: process.env.S3_ACCESS_KEY_ID,
-			secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-		},
-		region: process.env.S3_REGION,
-		endpoint: process.env.S3_ENDPOINT,
-	});
+	if (!bucket) {
+		console.error("S3_BUCKET is not defined");
+		throw new APIError("Internal Server Error", 500, undefined, true);
+	}
+
+	const client = getS3Client();
+	if (!client) {
+		console.error("S3 client is not defined");
+		throw new APIError("Internal Server Error", 500, undefined, true);
+	}
 
 	const originalFiles: string[] = [];
 
@@ -139,9 +148,9 @@ const afterDelete: CollectionAfterDeleteHook<S3FileData> = async ({ doc }) => {
 		originalFiles.push(doc.object);
 	} else if (typeof doc.filename === "object") {
 		originalFiles.push(
-			...Object.values(doc.sizes).map(
-				(resizedFileData) => resizedFileData?.filename,
-			),
+			...(Object.values(doc.sizes)
+				.map((resizedFileData) => resizedFileData?.filename)
+				.filter((filename) => !!filename) as string[]),
 		);
 	}
 
