@@ -309,7 +309,7 @@ export async function callback(req: Request, res: Response) {
 			sameSite: "lax",
 			maxAge: 2 * 7 * 24 * 60 * 60 * 1000,
 		});
-
+  
 	return res.redirect(redirect_uri);
 }
 
