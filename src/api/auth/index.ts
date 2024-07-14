@@ -187,6 +187,26 @@ router.get("/refresh", async (req, res) => {
 	});
 });
 
+router.post("/logout", async (req, res) => {
+	const url = new URL(req.url);
+
+	if (url.searchParams.get("token") !== req.headers["X-OUTTA-TOKEN"]) {
+		return res.status(400).send({
+			result: false,
+			error: {
+				code: "invalid_token",
+				message: "Invalid Token",
+			},
+		});
+	}
+
+	res.clearCookie("OUTTA_ACCESS_TOKEN");
+	res.clearCookie("OUTTA_REFRESH_TOKEN");
+	res.clearCookie("OUTTA_REDIRECT_URI");
+
+	return res.send(200);
+});
+
 const config = () => {
 	for (const provider in providers) {
 		try {
