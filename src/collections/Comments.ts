@@ -110,24 +110,20 @@ const Comments: CollectionConfig = {
 		delete: ({ req }) => !!req.user,
 	},
 	hooks: {
-		beforeOperation: [
-			async ({ req, operation, args }) => {
-				if (req.user) return args;
-
-				if (operation === "read" || operation === "count") {
-					args.where = { ...args.where, deletedAt: { exists: false } };
-				}
+		beforeValidate: [
+			async ({ req, operation, data }) => {
+				if (req.user) return data;
 
 				if (operation === "create") {
 					const authResult = await checkAuth(
 						req,
 						process.env.PUBLIC_TOKEN_SECRET,
 					);
-					if (!authResult.result) return args;
-					args.data = { ...args.data, author: authResult.data.member.id };
+					if (!authResult.result) return data;
+					return { ...data, author: authResult.data.member.id };
 				}
 
-				return args;
+				return data;
 			},
 		],
 	},
