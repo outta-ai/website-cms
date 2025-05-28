@@ -1,0 +1,7 @@
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - '@swc/core'
+  - aws-crt
+  - es5-ext
+  - esbuild
+  - sharp
