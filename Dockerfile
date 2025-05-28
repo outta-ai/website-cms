@@ -1,5 +1,7 @@
 FROM node:20-alpine as base
 
+RUN apk add --no-cache tar
+
 FROM base as builder
 
 WORKDIR /home/node/app
