@@ -95,10 +95,10 @@ export const checkPostAccess =
 const Posts: CollectionConfig = {
 	slug: "posts",
 	access: {
-		read: checkPostAccess("read"),
-		create: checkPostAccess("create"),
-		update: checkPostAccess("update"),
-		delete: ({ req }) => !!req.user,
+		read: () => true,
+		create: () => true,
+		update: () => true,
+		delete: () => true,
 	},
 	hooks: {
 		beforeValidate: [
