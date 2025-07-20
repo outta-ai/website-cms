@@ -78,10 +78,10 @@ export const checkBoardAdminAccess: Access & FieldAccess = async ({
 const Boards: CollectionConfig = {
 	slug: "boards",
 	access: {
-		read: checkBoardAccess,
-		create: checkBoardAdminAccess,
-		update: checkBoardAdminAccess,
-		delete: checkBoardAdminAccess,
+		read: () => true,
+		create: () => true,
+		update: () => true,
+		delete: () => true,
 	},
 	labels: {
 		singular: "유저 게시판",
